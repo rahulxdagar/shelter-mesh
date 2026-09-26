@@ -1,52 +1,84 @@
+import { useState } from 'react';
 import { authMode, roleOf, Snowflake, useSession } from './auth';
 import { useI18n } from './i18n';
 import { useLive } from './live';
-import { OpsView } from './views/Ops';
-import { OutreachView } from './views/Outreach';
-import { ResponderView } from './views/Responder';
-import { ShelterView } from './views/Shelter';
+
+// Views
+import { OpsDashboardView } from './views/OpsDashboard';
+import { SheltersView } from './views/SheltersView';
+import { PeopleView } from './views/PeopleView';
 
 export function App() {
   const { t, toggle } = useI18n();
   const { me, signOut } = useSession();
-  const { connected, online, snapshot, snapshotIsCached, codeFrost } = useLive();
+  const { connected, online } = useLive();
   const role = roleOf(me);
+  
+  const [currentView, setCurrentView] = useState('ops');
 
-  const View = { outreach: OutreachView, responder: ResponderView, shelter_admin: ShelterView, city_ops: OpsView }[role];
-  const cfPending = codeFrost?.event?.status === 'pending_authorization';
-  const cfActive = codeFrost?.event?.status === 'active';
+  // Simple Sidebar Navigation
+  const navItems = [
+    { id: 'ops', label: 'City Operations', icon: '📊' },
+    { id: 'shelters', label: 'Shelters', icon: '🏢' },
+    { id: 'people', label: 'People', icon: '👥' },
+    { id: 'incidents', label: 'Incidents', icon: '🚨' },
+  ];
 
   return (
-    <div className={`app role-${role}`}>
-      <header className="topbar">
-        <div className="brand">
+    <div className={`app-shell role-${role}`}>
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
           <Snowflake />
-          <span>{t.appName}</span>
+          <span>Shelter Mesh</span>
         </div>
-        <span className={`pill ${connected ? 'pill-on' : 'pill-off'}`}>{connected ? t.live : t.connecting}</span>
-        <div className="grow" />
-        <span className="who small">
-          {me.name} · {t[`role_${role}`]}
-        </span>
-        <button className="btn btn-ghost btn-sm" onClick={toggle} aria-label="Language">
-          {t.language}
-        </button>
-        <button className="btn btn-ghost btn-sm" onClick={signOut}>
-          {authMode === 'dev' ? t.switchRole : t.signOut}
-        </button>
-      </header>
-      {(!online || !connected) && snapshot && snapshotIsCached && (
-        <div className="banner banner-warn">
-          {t.offline} {new Date(snapshot.at).toLocaleTimeString()}
+        <nav className="sidebar-nav">
+          {navItems.map(item => (
+            <button 
+              key={item.id}
+              className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+              onClick={() => setCurrentView(item.id)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Topbar */}
+        <header className="topbar">
+          <div className="search-bar">
+            <span>🔍</span>
+            <input type="text" className="search-input" placeholder="Search people, shelters, incidents..." />
+            <span className="cmd-k">⌘K</span>
+          </div>
+          
+          <div style={{ flex: 1 }} />
+          
+          <span className={`badge ${connected ? 'green' : 'amber'}`}>
+            {connected ? '● Live Operations' : '○ Connecting...'}
+          </span>
+          
+          <div className="flex-center gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
+            <div className="avatar">{me.name.charAt(0)}</div>
+            {me.name}
+          </div>
+          
+          <button className="btn btn-outline" onClick={signOut}>
+            {authMode === 'dev' ? 'Switch Role' : 'Sign Out'}
+          </button>
+        </header>
+
+        {/* View Content */}
+        <div className="page-content">
+          {currentView === 'ops' && <OpsDashboardView />}
+          {currentView === 'shelters' && <SheltersView />}
+          {currentView === 'people' && <PeopleView />}
+          {currentView === 'incidents' && <div>Incidents View (WIP)</div>}
         </div>
-      )}
-      {(cfPending || cfActive) && role !== 'city_ops' && (
-        <div className={`banner ${cfActive ? 'banner-info' : 'banner-warn'}`}>
-          ❄ {t.codeFrost}: {t[`status_${codeFrost!.event!.status}`]}
-        </div>
-      )}
-      <main className="content">
-        <View />
       </main>
     </div>
   );
