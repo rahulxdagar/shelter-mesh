@@ -1,0 +1,66 @@
+# Production-like local run: the API container in NODE_ENV=production against a single-node
+# MongoDB replica set (change streams and transactions need a replica set) and TimescaleDB
+# (the same engine as Tiger Data) for history. TimescaleDB is also published on :5433 so
+# `npm run dev` can use it.
+# Values come from ./.env (gitignored). Usage: docker compose up --build
+services:
+  mongo:
+    # 8.2: the mongo:8 (8.0) image refuses Linux kernels >= 6.19, which Docker Desktop now ships.
+    image: mongo:8.2
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Initiates the replica set on first start, then reports healthy once it is up.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status().ok } catch (e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]}).ok }"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  timescale:
+    image: timescale/timescaledb:latest-pg17
+    environment:
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-coldgrid}
+      POSTGRES_DB: coldgrid
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "coldgrid"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ./server
+    depends_on:
+      mongo:
+        condition: service_healthy
+      timescale:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8081}:8080"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:?set AUTH0_DOMAIN in .env}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:?set AUTH0_AUDIENCE in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+      # Local TimescaleDB by default; set TIGER_DATABASE_URL in .env to use Tiger Cloud instead.
+      TIGER_DATABASE_URL: ${TIGER_DATABASE_URL:-postgres://postgres:${TIMESCALE_PASSWORD:-coldgrid}@timescale:5432/coldgrid}
+      GOOGLE_MAPS_SERVER_KEY: ${GOOGLE_MAPS_SERVER_KEY:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      ONCALL_NUMBERS: ${ONCALL_NUMBERS:-}
+      FIELD_NUMBERS: ${FIELD_NUMBERS:-}
+      HEDERA_ACCOUNT_ID: ${HEDERA_ACCOUNT_ID:-}
+      HEDERA_PRIVATE_KEY: ${HEDERA_PRIVATE_KEY:-}
+      HEDERA_TOPIC_ID: ${HEDERA_TOPIC_ID:-}
+      DEMO_CONTROLS: ${DEMO_CONTROLS:-true}
+
+volumes:
+  mongo-data:
+  timescale-data:
