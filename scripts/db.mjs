@@ -56,7 +56,10 @@ try {
   if (command === "migrate" || command === "setup") await migrate();
   if (command === "seed" || command === "setup") await seed();
 } catch (err) {
-  console.error(`\n${err.message}${err.detail ? `\n${err.detail}` : ""}${err.where ? `\n${err.where}` : ""}`);
+  // Some pg errors (e.g. aggregate connection errors) have an empty message; fall back to the object.
+  const text = err.message || err.code || String(err);
+  console.error(`\n${text}${err.detail ? `\n${err.detail}` : ""}${err.where ? `\n${err.where}` : ""}`);
+  if (!err.message) console.error(err);
   process.exitCode = 1;
 } finally {
   await client.end();
