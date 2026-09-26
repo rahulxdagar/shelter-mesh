@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* Cold-Grid tactical palette: near-black field, ice accents, signal colours reserved for state. */
+@theme {
+  --color-void: #05070a;
+  --color-deep: #090c10;
+  --color-panel: #0e1319;
+  --color-raised: #141a22;
+  --color-line: #1d2530;
+  --color-line-strong: #2a3441;
+  --color-ink: #e8eef5;
+  --color-ink-2: #aeb9c7;
+  --color-muted: #7a8696;
+  --color-faint: #4b5563;
+
+  --color-ice: #6fd3ff;
+  --color-ice-dim: #1b3a4d;
+  --color-go: #34d399;
+  --color-go-dim: #0f2f25;
+  --color-caution: #fbbf24;
+  --color-caution-dim: #3a2c0a;
+  --color-alarm: #ff3b4e;
+  --color-alarm-dim: #3d0f16;
+  --color-frost: #b8e6ff;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-card: 14px;
+  --shadow-glow-alarm: 0 0 0 1px rgb(255 59 78 / 0.5), 0 0 32px rgb(255 59 78 / 0.35);
+  --shadow-glow-ice: 0 0 0 1px rgb(111 211 255 / 0.35), 0 0 28px rgb(111 211 255 / 0.18);
+
+  --animate-ping-slow: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgb(111 211 255 / 0.3);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle grid texture for tactical surfaces */
+.grid-field {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+/* MapLibre chrome, restyled for the dark console */
+.maplibregl-ctrl-group {
+  background: var(--color-panel) !important;
+  border: 1px solid var(--color-line) !important;
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top-color: var(--color-line) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(0.8);
+}
+.maplibregl-ctrl-attrib {
+  background: rgb(5 7 10 / 0.7) !important;
+  color: var(--color-muted) !important;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-ink-2) !important;
+}
+.maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}
+.maplibregl-popup-content {
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+}
+.maplibregl-popup-tip {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
