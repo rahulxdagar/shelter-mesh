@@ -2,6 +2,10 @@
 
 Real-time inter-agency shelter triage and emergency dispatch for the City of Ottawa. One PWA with five role views, backed by Supabase (Postgres + PostGIS + Realtime).
 
+## Live Demo
+
+[Open Cold-Grid](https://shelter-mesh-nqqp.vercel.app/login)
+
 | Role | Route | What it does |
 | --- | --- | --- |
 | Street Outreach | `/outreach` | Mobile intake → nearest compatible beds (PostGIS `ST_Distance`) → 1-tap 20-min **Hold Bed**, turn-by-turn walking directions, 2-second **Drop Pin** in the nav bar |
